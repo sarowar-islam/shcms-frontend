@@ -16,9 +16,18 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>(
     Capacitor.isNativePlatform() ? "login" : "landing",
   );
+  const [loginNotice, setLoginNotice] = useState("");
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
+    const handleUnauthorized = () => {
+      authService.clearAuth();
+      setUser(null);
+      setLoginNotice("Your session expired. Please sign in again.");
+      setScreen("login");
+    };
+    window.addEventListener("auth:unauthorized", handleUnauthorized);
+
     const storedUser = authService.getStoredUser();
     const token = authService.getToken();
 
@@ -27,6 +36,8 @@ export default function App() {
       setScreen("app");
     }
     setChecking(false);
+
+    return () => window.removeEventListener("auth:unauthorized", handleUnauthorized);
   }, []);
 
   const handleLogout = async () => {
@@ -48,6 +59,7 @@ export default function App() {
     active: boolean;
   }) => {
     setUser({ ...userData, id: userData.userId, password: "", joinedDate: "" });
+    setLoginNotice("");
     setScreen("app");
   };
 
@@ -75,6 +87,7 @@ export default function App() {
     return (
       <Login
         onLogin={handleLogin}
+        notice={loginNotice}
         onBack={Capacitor.isNativePlatform() ? undefined : () => setScreen("landing")}
       />
     );
@@ -84,6 +97,7 @@ export default function App() {
     return (
       <Login
         onLogin={handleLogin}
+        notice={loginNotice}
         onBack={Capacitor.isNativePlatform() ? undefined : () => setScreen("landing")}
       />
     );

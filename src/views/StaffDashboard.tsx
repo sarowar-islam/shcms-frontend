@@ -293,7 +293,7 @@ export default function StaffDashboard({ user, onLogout }: Props) {
               border: "1px solid var(--border)",
             }}
           >
-            <table className="min-w-[760px] w-full text-sm">
+            <table className="min-w-[1040px] w-full text-sm">
               <thead>
                 <tr
                   style={{
@@ -313,7 +313,7 @@ export default function StaffDashboard({ user, onLogout }: Props) {
                   ].map((h) => (
                     <th
                       key={h}
-                      className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider"
+                      className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider ${h === "Actions" ? "text-right" : "text-left"}`}
                       style={{
                         color: "#6B7280",
                         fontFamily: "var(--font-mono)",
@@ -413,7 +413,7 @@ export default function StaffDashboard({ user, onLogout }: Props) {
                         })}
                       </td>
                       <td
-                        className="px-4 py-3"
+                        className="px-4 py-3 text-right"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <select
@@ -424,7 +424,7 @@ export default function StaffDashboard({ user, onLogout }: Props) {
                               assignedTo: c.assignedTo ?? user.id,
                             })
                           }
-                          className="text-xs px-2 py-1 rounded border outline-none"
+                          className="h-8 w-36 rounded border px-2 text-left text-xs outline-none"
                           style={{
                             borderColor: "var(--border)",
                             fontFamily: "var(--font-mono)",

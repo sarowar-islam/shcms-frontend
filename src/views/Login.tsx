@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from "axios";
 import { authService } from "../services/api";
 import type { Role } from "../types";
 
@@ -14,10 +15,11 @@ interface LoginProps {
     phone?: string;
     active: boolean;
   }) => void;
+  notice?: string;
   onBack?: () => void;
 }
 
-export default function Login({ onLogin, onBack }: LoginProps) {
+export default function Login({ onLogin, notice, onBack }: LoginProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -47,8 +49,11 @@ export default function Login({ onLogin, onBack }: LoginProps) {
         active: response.active,
       });
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "Login failed";
-      setError(errorMessage || "Invalid credentials or account inactive. Please try again.");
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        setError("Invalid username or password, or this account is inactive.");
+      } else {
+        setError(err instanceof Error ? err.message : "Login failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -178,6 +183,19 @@ export default function Login({ onLogin, onBack }: LoginProps) {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {notice && (
+              <div
+                className="px-3 py-2.5 rounded text-xs"
+                style={{
+                  backgroundColor: "#FFFBEB",
+                  border: "1px solid #FDE68A",
+                  color: "#92400E",
+                  fontFamily: "var(--font-body)",
+                }}
+              >
+                {notice}
+              </div>
+            )}
             <div>
               <label
                 className="block text-xs font-medium mb-1.5"

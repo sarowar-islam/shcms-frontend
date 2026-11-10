@@ -16,6 +16,7 @@ import {
 import Sidebar from "../components/Sidebar";
 import { StatusBadge, UrgencyBadge } from "../components/StatusBadge";
 import { userService, type ManagedUserInput } from "../services/api";
+import axios from "axios";
 
 type Tab =
   | "overview"
@@ -239,8 +240,10 @@ export default function AdminConsole({ user, onLogout }: Props) {
       setEditingUser(null);
       setUserError("");
     } catch (error) {
-      const message = error as { response?: { data?: { error?: string } } };
-      setUserError(message.response?.data?.error ?? "Unable to save this account.");
+      const message = axios.isAxiosError<{ error?: string }>(error)
+        ? error.response?.data?.error
+        : undefined;
+      setUserError(message ?? "Unable to save this account.");
       throw error;
     }
   };
@@ -833,7 +836,7 @@ export default function AdminConsole({ user, onLogout }: Props) {
                   + Add Student
                 </button>
               </div>
-              <table className="min-w-[720px] w-full text-sm">
+              <table className="min-w-[1120px] w-full text-sm">
                 <thead>
                   <tr style={{ backgroundColor: "#F4F5F7" }}>
                     {[
@@ -848,7 +851,7 @@ export default function AdminConsole({ user, onLogout }: Props) {
                     ].map((h) => (
                       <th
                         key={h}
-                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider"
+                        className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider ${h === "Action" ? "text-right" : "text-left"}`}
                         style={{
                           color: "#6B7280",
                           fontFamily: "var(--font-mono)",
@@ -926,31 +929,33 @@ export default function AdminConsole({ user, onLogout }: Props) {
                           {s.active ? "Active" : "Inactive"}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <button
-                          onClick={() => handleToggleUser(s)}
-                          className="text-xs px-3 py-1 rounded border transition-colors hover:bg-gray-100"
-                          style={{
-                            borderColor: "var(--border)",
-                            color: s.active ? "#DC2626" : "#059669",
-                          }}
-                        >
-                          {s.active ? "Deactivate" : "Activate"}
-                        </button>
-                        <button
-                          onClick={() => { setEditingUser(s); setUserFormOpen(true); }}
-                          className="ml-2 text-xs px-3 py-1 rounded border"
-                          style={{ borderColor: "var(--border)", color: "#1A3A5C" }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteUser(s)}
-                          className="ml-2 text-xs px-3 py-1 rounded border"
-                          style={{ borderColor: "#FECACA", color: "#B91C1C" }}
-                        >
-                          Delete
-                        </button>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                          <button
+                            onClick={() => handleToggleUser(s)}
+                            className="h-8 w-28 rounded border px-2 text-xs transition-colors hover:bg-gray-100"
+                            style={{
+                              borderColor: "var(--border)",
+                              color: s.active ? "#DC2626" : "#059669",
+                            }}
+                          >
+                            {s.active ? "Deactivate" : "Activate"}
+                          </button>
+                          <button
+                            onClick={() => { setEditingUser(s); setUserFormOpen(true); }}
+                            className="h-8 w-16 rounded border px-2 text-xs"
+                            style={{ borderColor: "var(--border)", color: "#1A3A5C" }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(s)}
+                            className="h-8 w-16 rounded border px-2 text-xs"
+                            style={{ borderColor: "#FECACA", color: "#B91C1C" }}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -989,7 +994,7 @@ export default function AdminConsole({ user, onLogout }: Props) {
                   + Add Staff
                 </button>
               </div>
-              <table className="min-w-[720px] w-full text-sm">
+              <table className="min-w-[1160px] w-full text-sm">
                 <thead>
                   <tr style={{ backgroundColor: "#F4F5F7" }}>
                     {[
@@ -1004,7 +1009,7 @@ export default function AdminConsole({ user, onLogout }: Props) {
                     ].map((h) => (
                       <th
                         key={h}
-                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider"
+                        className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider ${h === "Action" ? "text-right" : "text-left"}`}
                         style={{
                           color: "#6B7280",
                           fontFamily: "var(--font-mono)",
@@ -1083,31 +1088,33 @@ export default function AdminConsole({ user, onLogout }: Props) {
                             {assignedCount !== 1 ? "s" : ""}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
-                          <button
-                            onClick={() => handleToggleUser(s)}
-                            className="text-xs px-3 py-1 rounded border transition-colors hover:bg-gray-100"
-                            style={{
-                              borderColor: "var(--border)",
-                              color: s.active ? "#DC2626" : "#059669",
-                            }}
-                          >
-                            {s.active ? "Deactivate" : "Activate"}
-                          </button>
-                          <button
-                            onClick={() => { setEditingUser(s); setUserFormOpen(true); }}
-                            className="ml-2 text-xs px-3 py-1 rounded border"
-                            style={{ borderColor: "var(--border)", color: "#1A3A5C" }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteUser(s)}
-                            className="ml-2 text-xs px-3 py-1 rounded border"
-                            style={{ borderColor: "#FECACA", color: "#B91C1C" }}
-                          >
-                            Delete
-                          </button>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                            <button
+                              onClick={() => handleToggleUser(s)}
+                              className="h-8 w-28 rounded border px-2 text-xs transition-colors hover:bg-gray-100"
+                              style={{
+                                borderColor: "var(--border)",
+                                color: s.active ? "#DC2626" : "#059669",
+                              }}
+                            >
+                              {s.active ? "Deactivate" : "Activate"}
+                            </button>
+                            <button
+                              onClick={() => { setEditingUser(s); setUserFormOpen(true); }}
+                              className="h-8 w-16 rounded border px-2 text-xs"
+                              style={{ borderColor: "var(--border)", color: "#1A3A5C" }}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(s)}
+                              className="h-8 w-16 rounded border px-2 text-xs"
+                              style={{ borderColor: "#FECACA", color: "#B91C1C" }}
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -1392,8 +1399,11 @@ function UserFormModal({
     setError("");
     try {
       await onSave({ ...form, role: form.role as "student" | "staff" | "admin" });
-    } catch {
-      setError("Please check the details and try again.");
+    } catch (submitError: unknown) {
+      const message = axios.isAxiosError<{ error?: string }>(submitError)
+        ? submitError.response?.data?.error
+        : undefined;
+      setError(message ?? "Unable to save this account. Please try again.");
     } finally {
       setSaving(false);
     }

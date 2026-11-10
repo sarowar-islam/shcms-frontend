@@ -68,9 +68,12 @@ export type ManagedUserInput = Omit<ManagedUser, "joinedDate"> & { password?: st
 
 export const userService = {
   getAll: async (): Promise<ManagedUser[]> => (await api.get<ManagedUser[]>("/users")).data,
-  create: async (user: ManagedUserInput): Promise<ManagedUser> => (await api.post<ManagedUser>("/users", user)).data,
+  create: async (user: ManagedUserInput): Promise<ManagedUser> =>
+    (await api.post<ManagedUser>("/users", { ...user, role: user.role.toUpperCase() })).data,
   update: async (userId: string, user: Partial<ManagedUserInput>): Promise<ManagedUser> =>
-    (await api.put<ManagedUser>(`/users/${encodeURIComponent(userId)}`, user)).data,
+    (await api.put<ManagedUser>(`/users/${encodeURIComponent(userId)}`, user.role
+      ? { ...user, role: user.role.toUpperCase() }
+      : user)).data,
   setActive: async (userId: string, active: boolean): Promise<ManagedUser> =>
     (await api.patch<ManagedUser>(`/users/${encodeURIComponent(userId)}/status`, { active })).data,
   remove: async (userId: string): Promise<void> => {
