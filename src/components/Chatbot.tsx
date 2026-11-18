@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import type { ComplaintCategory, UrgencyLevel } from "../dummy";
+import api from "../utils/api";
 
 interface ParsedComplaint {
   title: string;
@@ -13,43 +14,14 @@ interface ChatMessage {
   text: string;
 }
 
+interface ChatbotReply {
+  reply: string;
+  complaint: ParsedComplaint | null;
+}
+
 interface ChatbotProps {
   onFillForm: (data: ParsedComplaint) => void;
   onClose: () => void;
-}
-
-function parseIssue(text: string): ParsedComplaint {
-  const lower = text.toLowerCase();
-
-  let category: ComplaintCategory = "others";
-  if (/fan|switch|light|bulb|socket|power|electric|fuse|wiring/.test(lower)) category = "electrical";
-  else if (/water|tap|pipe|leak|drain|flush|toilet|bathroom|shower/.test(lower)) category = "plumbing";
-  else if (/chair|bed|table|desk|cupboard|almirah|furniture|broken/.test(lower)) category = "furniture";
-  else if (/clean|dirty|garbage|waste|smell|odour|sweep/.test(lower)) category = "cleanliness";
-  else if (/security|guard|gate|lock|theft|safe/.test(lower)) category = "security";
-  else if (/wifi|wi-fi|internet|network|connection|router/.test(lower)) category = "internet";
-
-  let urgency: UrgencyLevel = "medium";
-  if (/critical|emergency|urgent|immediately|danger|hazard/.test(lower)) urgency = "critical";
-  else if (/high|important|serious|bad/.test(lower)) urgency = "high";
-  else if (/low|minor|small|slight/.test(lower)) urgency = "low";
-
-  const titleMap: Record<ComplaintCategory, string> = {
-    electrical: "Electrical issue reported",
-    plumbing: "Plumbing issue reported",
-    furniture: "Furniture damage reported",
-    cleanliness: "Cleanliness complaint",
-    security: "Security concern raised",
-    internet: "Internet connectivity issue",
-    others: "General complaint",
-  };
-
-  return {
-    title: titleMap[category],
-    description: text.trim(),
-    category,
-    urgency,
-  };
 }
 
 const GREETINGS = [
@@ -72,26 +44,39 @@ export default function Chatbot({ onFillForm, onClose }: ChatbotProps) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  const send = () => {
+  const send = async () => {
     const trimmed = input.trim();
-    if (!trimmed) return;
+    if (!trimmed || isTyping) return;
     setInput("");
+    const conversation = [...messages, { role: "user" as const, text: trimmed }].slice(-20);
     setMessages((m) => [...m, { role: "user", text: trimmed }]);
+    setShowConfirm(false);
+    setPendingParsed(null);
     setIsTyping(true);
 
-    setTimeout(() => {
-      const parsed = parseIssue(trimmed);
-      setPendingParsed(parsed);
-      setIsTyping(false);
+    try {
+      const { data } = await api.post<ChatbotReply>("/chatbot/chat", {
+        messages: conversation.map((message) => ({
+          role: message.role === "bot" ? "model" : "user",
+          text: message.text,
+        })),
+      });
+      setMessages((m) => [...m, { role: "bot", text: data.reply }]);
+      if (data.complaint) {
+        setPendingParsed(data.complaint);
+        setShowConfirm(true);
+      }
+    } catch {
       setMessages((m) => [
         ...m,
         {
           role: "bot",
-          text: `I've identified this as a ${parsed.category} issue with ${parsed.urgency} urgency. Shall I fill the complaint form with this information?`,
+          text: "I couldn't reach the assistant. Please check the backend Gemini configuration and try again.",
         },
       ]);
-      setShowConfirm(true);
-    }, 900);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleConfirm = () => {
@@ -231,7 +216,8 @@ export default function Chatbot({ onFillForm, onClose }: ChatbotProps) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && send()}
+          onKeyDown={(e) => e.key === "Enter" && void send()}
+          maxLength={2000}
           placeholder="e.g. My fan switch is not working"
           className="flex-1 px-3 py-2 rounded text-sm outline-none"
           style={{
@@ -242,9 +228,13 @@ export default function Chatbot({ onFillForm, onClose }: ChatbotProps) {
           }}
         />
         <button
-          onClick={send}
+          onClick={() => void send()}
+          disabled={isTyping || !input.trim()}
           className="px-3 py-2 rounded text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: "#0E7C7B" }}
+          style={{
+            backgroundColor: "#0E7C7B",
+            opacity: isTyping || !input.trim() ? 0.6 : 1,
+          }}
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="22" y1="2" x2="11" y2="13" />
